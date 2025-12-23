@@ -2,7 +2,7 @@
   "nodes": [
     {
       "parameters": {
-        "url": "https://internal.users.n8n.cloud/webhook/custom-erp",
+        "url": "{{ INTERNAL_WEBHOOK_URL }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
@@ -10,7 +10,7 @@
           "parameters": [
             {
               "name": "unique_id",
-              "value": "b2e590167ea9876495ef181a07a45067"
+              "value": "{{ UNIQUE_WORKFLOW_ID }}"
             }
           ]
         },
@@ -18,16 +18,13 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
-      "position": [
-        208,
-        0
-      ],
-      "id": "56099265-1fb7-4fdd-82dc-136d3ef5ee07",
+      "position": [208, 0],
+      "id": "http_request",
       "name": "HTTP Request",
       "credentials": {
         "httpHeaderAuth": {
-          "id": "3nh62XHXInrQqvsb",
-          "name": "Header Auth account"
+          "id": "HTTP_HEADER_AUTH",
+          "name": "HTTP Header Auth"
         }
       }
     },
@@ -36,112 +33,64 @@
         "operation": "create",
         "base": {
           "__rl": true,
-          "value": "app9jSltlXuTN5AtX",
-          "mode": "list",
-          "cachedResultName": "Untitled Base",
-          "cachedResultUrl": "https://airtable.com/app9jSltlXuTN5AtX"
+          "value": "{{ AIRTABLE_BASE_ID }}",
+          "mode": "list"
         },
         "table": {
           "__rl": true,
-          "value": "tblLDErvIMTkKyRdu",
-          "mode": "list",
-          "cachedResultName": "processingOrders",
-          "cachedResultUrl": "https://airtable.com/app9jSltlXuTN5AtX/tblLDErvIMTkKyRdu"
+          "value": "{{ AIRTABLE_TABLE_ID }}",
+          "mode": "list"
         },
         "columns": {
           "mappingMode": "autoMapInputData",
-          "value": {},
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "orderID",
-              "displayName": "orderID",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "number",
-              "readOnly": false,
-              "removed": false
-            },
-            {
-              "id": "employeeName",
-              "displayName": "employeeName",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": false
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
+          "value": {}
         },
         "options": {}
       },
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.1,
-      "position": [
-        944,
-        -96
-      ],
-      "id": "93ffe348-f484-4816-88ad-5aa6dd66977b",
-      "name": "Create a record",
+      "position": [944, -96],
+      "id": "create_record",
+      "name": "Create Airtable Record",
       "credentials": {
         "airtableTokenApi": {
-          "id": "UNtdgXqHe4vaXwXK",
-          "name": "Airtable Personal Access Token account"
+          "id": "AIRTABLE_CREDENTIAL",
+          "name": "Airtable PAT"
         }
       }
     },
     {
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
           "conditions": [
             {
-              "id": "6678032b-b7e7-494b-a959-3b1b91f6f74b",
               "leftValue": "={{ $json.orderStatus }}",
-              "rightValue": "=processing",
+              "rightValue": "processing",
               "operator": {
                 "type": "string",
-                "operation": "equals",
-                "name": "filter.operator.equals"
+                "operation": "equals"
               }
             }
-          ],
-          "combinator": "and"
+          ]
         },
         "options": {}
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [
-        416,
-        0
-      ],
-      "id": "76f1d859-dd75-43c3-af65-7b199e6c67da",
-      "name": "If"
+      "position": [416, 0],
+      "id": "if_processing",
+      "name": "If Processing"
     },
     {
       "parameters": {
         "assignments": {
           "assignments": [
             {
-              "id": "117c3a71-1200-471e-9d00-c259f7ae1c65",
               "name": "orderID",
               "value": "={{ $json.orderID }}",
               "type": "number"
             },
             {
-              "id": "d50da299-6cf7-43b7-bc19-d54a50e6ad33",
               "name": "employeeName",
               "value": "={{ $json.employeeName }}",
               "type": "string"
@@ -152,45 +101,35 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [
-        784,
-        -96
-      ],
-      "id": "648ca4cd-4ebd-4732-b507-9cf0c8a9d110",
+      "position": [784, -96],
+      "id": "edit_fields",
       "name": "Edit Fields"
     },
     {
       "parameters": {
-        "jsCode": "let items = $input.all();\nlet totalBooked = items.length;\nlet bookedSum = 0;\n\nfor (let i=0; i < items.length; i++) {\n  bookedSum = bookedSum + items[i].json.orderPrice;\n}\n\nreturn [{ json: {totalBooked, bookedSum} }];"
+        "jsCode": "const items = $input.all();\nlet totalBooked = items.length;\nlet bookedSum = 0;\n\nfor (const item of items) {\n  bookedSum += item.json.orderPrice || 0;\n}\n\nreturn [{ json: { totalBooked, bookedSum } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        624,
-        96
-      ],
-      "id": "dca029ba-316d-484b-b3b5-a07befbdb5c9",
-      "name": "Code in JavaScript"
+      "position": [624, 96],
+      "id": "weekly_stats_false",
+      "name": "Calculate Stats (False)"
     },
     {
       "parameters": {
         "authentication": "webhook",
-        "content": "=This week we've {{$json[\"totalBooked\"]}} booked orders with a total value of {{$json[\"bookedSum\"]}}. My Unique ID: {{ $('HTTP Request').params[\"headerParameters\"][\"parameters\"][0][\"value\"] }}",
+        "content": "Weekly summary: {{ $json.totalBooked }} orders with total value {{ $json.bookedSum }}.",
         "options": {}
       },
       "type": "n8n-nodes-base.discord",
       "typeVersion": 2,
-      "position": [
-        832,
-        96
-      ],
-      "id": "d6ae102a-fc71-4836-9d80-5dfa4b1ec885",
-      "name": "Discord",
-      "webhookId": "d0c834cd-49bc-4c44-9a43-d421a54b2031",
+      "position": [832, 96],
+      "id": "discord_report",
+      "name": "Discord Report",
       "credentials": {
         "discordWebhookApi": {
-          "id": "hM0cUtb79f9uThsx",
-          "name": "Discord Webhook account"
+          "id": "DISCORD_WEBHOOK",
+          "name": "Discord Webhook"
         }
       }
     },
@@ -200,9 +139,7 @@
           "interval": [
             {
               "field": "weeks",
-              "triggerAtDay": [
-                1
-              ],
+              "triggerAtDay": [1],
               "triggerAtHour": 9
             }
           ]
@@ -210,105 +147,42 @@
       },
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.3,
-      "position": [
-        0,
-        0
-      ],
-      "id": "13a7ca4c-1463-4fd1-b591-9e2da0707a63",
-      "name": "Schedule Trigger"
+      "position": [0, 0],
+      "id": "schedule_trigger",
+      "name": "Weekly Schedule"
     },
     {
       "parameters": {
-        "jsCode": "let items = $input.all();\nlet totalBooked = items.length;\nlet bookedSum = 0;\n\nfor (let i=0; i < items.length; i++) {\n  bookedSum = bookedSum + items[i].json.orderPrice;\n}\n\nreturn [{ json: {totalBooked, bookedSum} }];"
+        "jsCode": "const items = $input.all();\nlet totalBooked = items.length;\nlet bookedSum = 0;\n\nfor (const item of items) {\n  bookedSum += item.json.orderPrice || 0;\n}\n\nreturn items;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        608,
-        -96
-      ],
-      "id": "1c6859d8-3e39-4f26-9c9b-0166f57723e2",
-      "name": "Code in JavaScript1"
+      "position": [608, -96],
+      "id": "processing_orders",
+      "name": "Process Orders"
     }
   ],
   "connections": {
+    "Weekly Schedule": {
+      "main": [[{ "node": "HTTP Request", "type": "main", "index": 0 }]]
+    },
     "HTTP Request": {
+      "main": [[{ "node": "If Processing", "type": "main", "index": 0 }]]
+    },
+    "If Processing": {
       "main": [
-        [
-          {
-            "node": "If",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [{ "node": "Process Orders", "type": "main", "index": 0 }],
+        [{ "node": "Calculate Stats (False)", "type": "main", "index": 0 }]
       ]
     },
-    "If": {
-      "main": [
-        [
-          {
-            "node": "Code in JavaScript1",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Code in JavaScript",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+    "Process Orders": {
+      "main": [[{ "node": "Edit Fields", "type": "main", "index": 0 }]]
     },
     "Edit Fields": {
-      "main": [
-        [
-          {
-            "node": "Create a record",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Create Airtable Record", "type": "main", "index": 0 }]]
     },
-    "Code in JavaScript": {
-      "main": [
-        [
-          {
-            "node": "Discord",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Schedule Trigger": {
-      "main": [
-        [
-          {
-            "node": "HTTP Request",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Code in JavaScript1": {
-      "main": [
-        [
-          {
-            "node": "Edit Fields",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+    "Calculate Stats (False)": {
+      "main": [[{ "node": "Discord Report", "type": "main", "index": 0 }]]
     }
-  },
-  "pinData": {},
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "dfa89495ac234c028120df695f63ce9b3bc6862370949cddf79cea4d4081954a"
   }
 }
